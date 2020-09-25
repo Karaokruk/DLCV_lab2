@@ -6,6 +6,25 @@ import numpy as np
 
 #import keras
 from tensorflow.keras.datasets import mnist
+
+def sigmoid(z):
+    return 1/(1+np.exp(-z))
+
+def outputlayer(x,w,b):
+    z=0
+    for i in range(len(x)):
+        z+=x[i]*w[i]
+    return sigmoid(z+b)
+
+def lossfunction(x,w,b, trueoutput):
+    return -(outputlayer(x,w,b)*numpy.log(trueoutput))
+
+def derivlossforw(x,w,b,trueoutput):
+    s = 0
+    for i in range(len(w)):
+        s+=w[i]*x[i]
+    return numpy.exp(b+s)*numpy.log(trueoutput) / (1+numpy.exp(b+s))
+
 (X_train, y_train), (X_test, y_test) = mnist.load_data()
 
 
@@ -61,4 +80,6 @@ X_train, y_train = X_train[:,shuffle_index], y_train[:,shuffle_index]
 
 
 #####TO COMPLETE
+
+
 
