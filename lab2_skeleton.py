@@ -161,7 +161,7 @@ def checkAccuracy(kit, trained):
     return cpt * 1. / nb_digits
 
 
-nb_epochs = 20
+nb_epochs = 50
 lr = 0.10
 np.random.seed()
 
@@ -172,9 +172,9 @@ np.random.seed()
 
 epoch_list = list(range(nb_epochs))
 
-simpleNN_plot = False
+simpleNN_plot = True
 hidden64NN_plot = True
-simpleNN_vs_hidden64NN_plot = False
+simpleNN_vs_hidden64NN_plot = True
 
 ## Simple Neuronal Network plot
 if simpleNN_plot:
