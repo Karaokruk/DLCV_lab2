@@ -32,12 +32,11 @@ y_new = np.zeros(y_test.shape)
 y_new[np.where(y_test==0.0)[0]] = 1
 y_test = y_new
 
-
 y_train = y_train.T
 y_test = y_test.T
 
-
 m = X_train.shape[1] #number of examples
+n = X_train.shape[0]
 
 #Now, we shuffle the training set
 np.random.seed()
@@ -64,28 +63,30 @@ def sigmoid(z):
 def crossEntropy(y, Y_hat):
     return -(1./m) * (np.sum(np.multiply(y, np.log(Y_hat))) + np.sum(np.multiply(1-y, np.log(1-Y_hat))))
 
-n = X_train.shape[0]
+def printStats(epoch, loss, accuracy):
+    print("Simple NN -- Epoch : ", epoch + 1)
+    print("Loss : {:.10f}".format(loss))
+    print("Accuracy : {:.2f}%".format(accuracy * 100))
 
-def simpleNN(kit, nb_epochs, lr):
-    (X, Y) = kit
+def simpleNN(training_kit, testing_kit, nb_epochs, lr, verbose = True):
+    (X, Y) = training_kit
     accuracies = []
     losses = []
 
     W = np.random.randn(1, n) * 0.01
     b = np.zeros((1, 1))
-    for i in range(nb_epochs):
+    for epoch in range(nb_epochs):
         Z = np.matmul(W, X) + b
         Y_hat = sigmoid(Z)
 
-        print("Epoch : ", i + 1)
-
         loss = crossEntropy(Y, Y_hat)
         losses.append(loss)
-        print("Loss value : ", loss)
 
-        accuracy = checkAccuracy((X_test, y_test), (W, b))
+        accuracy = checkAccuracy(testing_kit, (W, b))
         accuracies.append(accuracy)
-        print("Accuracy : ", accuracy)
+
+        if verbose:
+            printStats(epoch, loss, accuracy)
 
         dW = (1./m) * np.matmul(Y_hat - Y, X.T)
         db = (1./m) * np.sum(Y_hat - Y, axis=1, keepdims=True)
@@ -95,8 +96,8 @@ def simpleNN(kit, nb_epochs, lr):
 
     return (losses, accuracies)
 
-def hidden64NN(kit, nb_epochs, lr):
-    (X, Y) = kit
+def hidden64NN(training_kit, testing_kit, nb_epochs, lr, verbose = True):
+    (X, Y) = training_kit
     accuracies = []
     losses = []
 
@@ -106,13 +107,12 @@ def hidden64NN(kit, nb_epochs, lr):
     W2 = np.random.randn(1, nh) * 0.01
     b2 = np.zeros((1, 1))
 
-    for i in range(nb_epochs):
+    for epoch in range(nb_epochs):
         Z1 = np.matmul(W1, X) + b1
         Y1 = sigmoid(Z1)
         Z2 = np.matmul(W2, Y1) + b2
         Y_hat = sigmoid(Z2)
 
-        loss = crossEntropy(Y, Y_hat)
         dZ2 = Y_hat - Y
         dW2 = (1./m) * np.matmul(dZ2, Y1.T)
         db2 = (1./m) * np.sum(dZ2, axis=1, keepdims=True)
@@ -127,27 +127,26 @@ def hidden64NN(kit, nb_epochs, lr):
         W1 = W1 - lr * dW1
         b1 = b1 - lr * db1
 
-        print("Epoch : ", i + 1)
-
         loss = crossEntropy(Y, Y_hat)
         losses.append(loss)
-        print("Loss value : ", loss)
 
-        accuracy = checkAccuracy((X_test, y_test), ((W1, b1), (W2, b2)))
+        accuracy = checkAccuracy(testing_kit, ((W1, b1), (W2, b2)))
         accuracies.append(accuracy)
-        print("Accuracy : ", accuracy)
+
+        if verbose:
+            printStats(epoch, loss, accuracy)
 
     return (losses, accuracies)
 
-def checkAccuracy(kit, trained):
+def checkAccuracy(testing_kit, trained):
     # Test accuracy (on X_test, y_test)
     if isinstance(trained[0], tuple): # if the trained data has more than 1 layer
-        (X1, Y1) = kit
+        (X1, Y1) = testing_kit
         (W1, b1) = trained[0]
         Y2 = sigmoid(np.matmul(W1, X1) + b1)
-        kit = (Y2, Y1)
+        testing_kit = (Y2, Y1)
         trained = trained[1]
-    (X, Y) = kit
+    (X, Y) = testing_kit
     (W, b) = trained
     Y_hat = sigmoid(np.matmul(W, X) + b)
 
@@ -161,14 +160,17 @@ def checkAccuracy(kit, trained):
     return cpt * 1. / nb_digits
 
 
-nb_epochs = 50
+training_kit = (X_train, y_train)
+testing_kit = (X_test, y_test)
+nb_epochs = 5
 lr = 0.10
+verbose = True
 np.random.seed()
 
 ## Simple Neuronal Network training
-(simpleNN_losses, simpleNN_accuracies) = simpleNN((X_train, y_train), nb_epochs, lr)
+(simpleNN_losses, simpleNN_accuracies) = simpleNN(training_kit, testing_kit, nb_epochs, lr, verbose)
 ## Hidden 64 Neuronal Network training
-(hidden64NN_losses, hidden64NN_accuracies) = hidden64NN((X_train, y_train), nb_epochs, lr)
+(hidden64NN_losses, hidden64NN_accuracies) = hidden64NN(training_kit, testing_kit, nb_epochs, lr, verbose)
 
 epoch_list = list(range(nb_epochs))
 
@@ -180,7 +182,6 @@ simpleNN_vs_hidden64NN_plot = True
 if simpleNN_plot:
     plt.plot(epoch_list, simpleNN_losses, label='loss')
     plt.plot(epoch_list, simpleNN_accuracies, label='accuracy')
-    #plt.plot(okyo, hidd, label='MSE')
     plt.xlabel('epochs')
     plt.ylabel('accuracy/loss')
     plt.legend()
@@ -192,7 +193,6 @@ if simpleNN_plot:
 if hidden64NN_plot:
     plt.plot(epoch_list, hidden64NN_losses, label='loss')
     plt.plot(epoch_list, hidden64NN_accuracies, label='accuracy')
-    #plt.plot(okyo, hidd, label='MSE')
     plt.xlabel('epochs')
     plt.ylabel('accuracy/loss')
     plt.legend()
